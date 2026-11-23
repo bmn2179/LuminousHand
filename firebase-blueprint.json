@@ -1,0 +1,301 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Parent or educator account and cross-device learner progress.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "displayName": {
+          "type": "string",
+          "maxLength": 60
+        },
+        "learnerName": {
+          "type": "string",
+          "maxLength": 35
+        },
+        "role": {
+          "type": "string",
+          "enum": ["parent", "educator"]
+        },
+        "selectedPlan": {
+          "type": "string",
+          "enum": ["free", "family", "classroom"]
+        },
+        "soundEnabled": {
+          "type": "boolean"
+        },
+        "completedLessons": {
+          "type": "array",
+          "description": "Completed lesson identifiers bounded to 60 items."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "uid",
+        "displayName",
+        "learnerName",
+        "role",
+        "selectedPlan",
+        "soundEnabled",
+        "completedLessons",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "LearningWorkflow": {
+      "title": "LearningWorkflow",
+      "description": "Subsequent personalized learning workflow created by the AI Supervisor agent.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "summary": {
+          "type": "string",
+          "maxLength": 1500
+        },
+        "focusArea": {
+          "type": "string",
+          "enum": ["alphabet", "numbers", "colors", "video-production"]
+        },
+        "assignedAgent": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "nextLessons": {
+          "type": "array",
+          "description": "Ordered next lessons recommended by the Supervisor Agent."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["active", "completed"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "ownerId",
+        "title",
+        "summary",
+        "focusArea",
+        "assignedAgent",
+        "nextLessons",
+        "status",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "AgentRagFile": {
+      "title": "AgentRagFile",
+      "description": "Supervisor or specialist sub-agent RAG knowledge base file.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "agentName": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "agentRole": {
+          "type": "string",
+          "enum": ["supervisor", "alphabet", "numbers", "colors", "video"]
+        },
+        "markdownContent": {
+          "type": "string",
+          "maxLength": 20000
+        },
+        "chunks": {
+          "type": "array",
+          "description": "Structured RAG retrieval chunks bounded to 30 items."
+        },
+        "version": {
+          "type": "integer"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "ownerId",
+        "agentName",
+        "agentRole",
+        "markdownContent",
+        "chunks",
+        "version",
+        "updatedAt"
+      ]
+    },
+    "AslVideoRecord": {
+      "title": "AslVideoRecord",
+      "description": "Kid or mentor ASL signing video entry for A-Z, 1-10, or Colors.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "lessonId": {
+          "type": "string",
+          "maxLength": 40
+        },
+        "category": {
+          "type": "string",
+          "enum": ["alphabet", "numbers", "colors"]
+        },
+        "label": {
+          "type": "string",
+          "maxLength": 40
+        },
+        "videoUrl": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "signerName": {
+          "type": "string",
+          "maxLength": 60
+        },
+        "signerType": {
+          "type": "string",
+          "enum": ["kid", "adult", "deaf-mentor"]
+        },
+        "verified": {
+          "type": "boolean"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "ownerId",
+        "lessonId",
+        "category",
+        "label",
+        "videoUrl",
+        "signerName",
+        "signerType",
+        "verified",
+        "updatedAt"
+      ]
+    },
+    "SupportTicket": {
+      "title": "SupportTicket",
+      "description": "Customer support inquiry submitted by an authenticated parent or educator.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "email": {
+          "type": "string",
+          "maxLength": 180
+        },
+        "topic": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "subject": {
+          "type": "string",
+          "maxLength": 140
+        },
+        "message": {
+          "type": "string",
+          "maxLength": 4000
+        },
+        "status": {
+          "type": "string",
+          "enum": ["open", "reviewed"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "ownerId",
+        "name",
+        "email",
+        "topic",
+        "subject",
+        "message",
+        "status",
+        "createdAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Private user account and cross-device learner progress."
+    },
+    "/users/{userId}/workflows/{workflowId}": {
+      "schema": { "$ref": "#/entities/LearningWorkflow" },
+      "description": "Subsequent AI Supervisor workflows tied to a user."
+    },
+    "/users/{userId}/ragFiles/{ragId}": {
+      "schema": { "$ref": "#/entities/AgentRagFile" },
+      "description": "Supervisor and sub-agent RAG knowledge documents."
+    },
+    "/users/{userId}/aslVideos/{videoId}": {
+      "schema": { "$ref": "#/entities/AslVideoRecord" },
+      "description": "Kid signing ASL video library records per user."
+    },
+    "/supportTickets/{ticketId}": {
+      "schema": { "$ref": "#/entities/SupportTicket" },
+      "description": "Customer support inquiries isolated to owner and verified admin."
+    }
+  }
+}

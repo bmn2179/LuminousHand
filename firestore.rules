@@ -1,0 +1,438 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isVerifiedUser() && request.auth.token.email == 'bmn2179@gmail.com';
+    }
+
+    function isValidUserProfile(data, userId) {
+      return data.keys().hasAll([
+          'uid',
+          'displayName',
+          'learnerName',
+          'role',
+          'selectedPlan',
+          'soundEnabled',
+          'completedLessons',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'uid',
+          'displayName',
+          'learnerName',
+          'role',
+          'selectedPlan',
+          'soundEnabled',
+          'completedLessons',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.uid is string
+        && data.uid.size() > 0
+        && data.uid.size() <= 128
+        && data.uid.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.uid == userId
+        && data.uid == request.auth.uid
+        && data.displayName is string
+        && data.displayName.size() <= 60
+        && data.learnerName is string
+        && data.learnerName.size() <= 35
+        && data.role is string
+        && data.role in ['parent', 'educator']
+        && data.selectedPlan is string
+        && data.selectedPlan in ['free', 'family', 'classroom']
+        && data.soundEnabled is bool
+        && data.completedLessons is list
+        && data.completedLessons.size() <= 60
+        && (data.completedLessons.size() == 0 || (data.completedLessons[0] is string && data.completedLessons[0].size() <= 40))
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidWorkflow(data, userId, workflowId) {
+      return data.keys().hasAll([
+          'id',
+          'ownerId',
+          'title',
+          'summary',
+          'focusArea',
+          'assignedAgent',
+          'nextLessons',
+          'status',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id',
+          'ownerId',
+          'title',
+          'summary',
+          'focusArea',
+          'assignedAgent',
+          'nextLessons',
+          'status',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.id is string
+        && data.id.size() > 0
+        && data.id.size() <= 128
+        && data.id.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.id == workflowId
+        && data.ownerId is string
+        && data.ownerId.size() > 0
+        && data.ownerId.size() <= 128
+        && data.ownerId.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.ownerId == userId
+        && data.ownerId == request.auth.uid
+        && data.title is string
+        && data.title.size() > 0
+        && data.title.size() <= 120
+        && data.summary is string
+        && data.summary.size() <= 1500
+        && data.focusArea is string
+        && data.focusArea in ['alphabet', 'numbers', 'colors', 'video-production']
+        && data.assignedAgent is string
+        && data.assignedAgent.size() > 0
+        && data.assignedAgent.size() <= 80
+        && data.nextLessons is list
+        && data.nextLessons.size() <= 12
+        && (data.nextLessons.size() == 0 || (data.nextLessons[0] is string && data.nextLessons[0].size() <= 60))
+        && data.status is string
+        && data.status in ['active', 'completed']
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidRagFile(data, userId, ragId) {
+      return data.keys().hasAll([
+          'id',
+          'ownerId',
+          'agentName',
+          'agentRole',
+          'markdownContent',
+          'chunks',
+          'version',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id',
+          'ownerId',
+          'agentName',
+          'agentRole',
+          'markdownContent',
+          'chunks',
+          'version',
+          'updatedAt'
+        ])
+        && data.id is string
+        && data.id.size() > 0
+        && data.id.size() <= 64
+        && data.id.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.id == ragId
+        && data.ownerId is string
+        && data.ownerId.size() > 0
+        && data.ownerId.size() <= 128
+        && data.ownerId.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.ownerId == userId
+        && data.ownerId == request.auth.uid
+        && data.agentName is string
+        && data.agentName.size() > 0
+        && data.agentName.size() <= 80
+        && data.agentRole is string
+        && data.agentRole in ['supervisor', 'alphabet', 'numbers', 'colors', 'video']
+        && data.markdownContent is string
+        && data.markdownContent.size() <= 20000
+        && data.chunks is list
+        && data.chunks.size() <= 30
+        && (data.chunks.size() == 0 || (data.chunks[0] is string && data.chunks[0].size() <= 600))
+        && data.version is int
+        && data.version >= 1
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidAslVideo(data, userId, videoId) {
+      return data.keys().hasAll([
+          'id',
+          'ownerId',
+          'lessonId',
+          'category',
+          'label',
+          'videoUrl',
+          'signerName',
+          'signerType',
+          'verified',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id',
+          'ownerId',
+          'lessonId',
+          'category',
+          'label',
+          'videoUrl',
+          'signerName',
+          'signerType',
+          'verified',
+          'updatedAt'
+        ])
+        && data.id is string
+        && data.id.size() > 0
+        && data.id.size() <= 64
+        && data.id.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.id == videoId
+        && data.ownerId is string
+        && data.ownerId.size() > 0
+        && data.ownerId.size() <= 128
+        && data.ownerId.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.ownerId == userId
+        && data.ownerId == request.auth.uid
+        && data.lessonId is string
+        && data.lessonId.size() > 0
+        && data.lessonId.size() <= 40
+        && data.category is string
+        && data.category in ['alphabet', 'numbers', 'colors']
+        && data.label is string
+        && data.label.size() > 0
+        && data.label.size() <= 40
+        && data.videoUrl is string
+        && data.videoUrl.size() <= 500
+        && data.signerName is string
+        && data.signerName.size() <= 60
+        && data.signerType is string
+        && data.signerType in ['kid', 'adult', 'deaf-mentor']
+        && data.verified is bool
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidSupportTicket(data) {
+      return data.keys().hasAll([
+          'ownerId',
+          'name',
+          'email',
+          'topic',
+          'subject',
+          'message',
+          'status',
+          'createdAt'
+        ])
+        && data.keys().hasOnly([
+          'ownerId',
+          'name',
+          'email',
+          'topic',
+          'subject',
+          'message',
+          'status',
+          'createdAt'
+        ])
+        && data.ownerId is string
+        && data.ownerId.size() > 0
+        && data.ownerId.size() <= 128
+        && data.ownerId.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.ownerId == request.auth.uid
+        && data.name is string
+        && data.name.size() > 0
+        && data.name.size() <= 100
+        && data.email is string
+        && data.email.size() > 0
+        && data.email.size() <= 180
+        && data.topic is string
+        && data.topic.size() > 0
+        && data.topic.size() <= 80
+        && data.subject is string
+        && data.subject.size() > 0
+        && data.subject.size() <= 140
+        && data.message is string
+        && data.message.size() > 0
+        && data.message.size() <= 4000
+        && data.status is string
+        && data.status in ['open', 'reviewed']
+        && data.createdAt is timestamp;
+    }
+
+    match /users/{userId} {
+      allow get: if isValidId(userId) && (isOwner(userId) || isAdmin());
+      allow list: if isAdmin();
+      allow create: if isValidId(userId)
+        && isVerifiedUser()
+        && isOwner(userId)
+        && isValidUserProfile(incoming(), userId)
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isValidId(userId)
+        && isVerifiedUser()
+        && isValidUserProfile(incoming(), userId)
+        && (isOwner(userId) || isAdmin())
+        && incoming().uid == existing().uid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          isAdmin() ||
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'displayName',
+            'learnerName',
+            'role',
+            'selectedPlan',
+            'soundEnabled',
+            'completedLessons',
+            'updatedAt'
+          ])
+        );
+      allow delete: if isAdmin();
+
+      match /workflows/{workflowId} {
+        allow get: if isValidId(userId) && isValidId(workflowId) && (isOwner(userId) || isAdmin());
+        allow list: if isValidId(userId) && (isOwner(userId) || isAdmin()) && resource.data.ownerId == userId;
+        allow create: if isValidId(userId)
+          && isValidId(workflowId)
+          && isVerifiedUser()
+          && isOwner(userId)
+          && isValidWorkflow(incoming(), userId, workflowId)
+          && exists(/databases/$(database)/documents/users/$(userId))
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time;
+        allow update: if isValidId(userId)
+          && isValidId(workflowId)
+          && isVerifiedUser()
+          && isValidWorkflow(incoming(), userId, workflowId)
+          && (isOwner(userId) || isAdmin())
+          && exists(/databases/$(database)/documents/users/$(userId))
+          && incoming().id == existing().id
+          && incoming().ownerId == existing().ownerId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && (
+            isAdmin() || (
+              existing().status != 'completed'
+              && incoming().diff(existing()).affectedKeys().hasOnly([
+                'title',
+                'summary',
+                'focusArea',
+                'assignedAgent',
+                'nextLessons',
+                'status',
+                'updatedAt'
+              ])
+            )
+          );
+        allow delete: if isValidId(userId) && isValidId(workflowId) && (isOwner(userId) || isAdmin());
+      }
+
+      match /ragFiles/{ragId} {
+        allow get: if isValidId(userId) && isValidId(ragId) && (isOwner(userId) || isAdmin());
+        allow list: if isValidId(userId) && (isOwner(userId) || isAdmin()) && resource.data.ownerId == userId;
+        allow create: if isValidId(userId)
+          && isValidId(ragId)
+          && isVerifiedUser()
+          && isOwner(userId)
+          && isValidRagFile(incoming(), userId, ragId)
+          && exists(/databases/$(database)/documents/users/$(userId))
+          && incoming().updatedAt == request.time;
+        allow update: if isValidId(userId)
+          && isValidId(ragId)
+          && isVerifiedUser()
+          && isValidRagFile(incoming(), userId, ragId)
+          && (isOwner(userId) || isAdmin())
+          && exists(/databases/$(database)/documents/users/$(userId))
+          && incoming().id == existing().id
+          && incoming().ownerId == existing().ownerId
+          && incoming().updatedAt == request.time
+          && (
+            isAdmin() ||
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'agentName',
+              'agentRole',
+              'markdownContent',
+              'chunks',
+              'version',
+              'updatedAt'
+            ])
+          );
+        allow delete: if isValidId(userId) && isValidId(ragId) && (isOwner(userId) || isAdmin());
+      }
+
+      match /aslVideos/{videoId} {
+        allow get: if isValidId(userId) && isValidId(videoId) && (isOwner(userId) || isAdmin());
+        allow list: if isValidId(userId) && (isOwner(userId) || isAdmin()) && resource.data.ownerId == userId;
+        allow create: if isValidId(userId)
+          && isValidId(videoId)
+          && isVerifiedUser()
+          && isOwner(userId)
+          && isValidAslVideo(incoming(), userId, videoId)
+          && exists(/databases/$(database)/documents/users/$(userId))
+          && incoming().updatedAt == request.time;
+        allow update: if isValidId(userId)
+          && isValidId(videoId)
+          && isVerifiedUser()
+          && isValidAslVideo(incoming(), userId, videoId)
+          && (isOwner(userId) || isAdmin())
+          && exists(/databases/$(database)/documents/users/$(userId))
+          && incoming().id == existing().id
+          && incoming().ownerId == existing().ownerId
+          && incoming().updatedAt == request.time
+          && (
+            isAdmin() ||
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'lessonId',
+              'category',
+              'label',
+              'videoUrl',
+              'signerName',
+              'signerType',
+              'verified',
+              'updatedAt'
+            ])
+          );
+        allow delete: if isValidId(userId) && isValidId(videoId) && (isOwner(userId) || isAdmin());
+      }
+    }
+
+    match /supportTickets/{ticketId} {
+      allow get: if isValidId(ticketId) && isVerifiedUser() && (existing().ownerId == request.auth.uid || isAdmin());
+      allow list: if isVerifiedUser() && (resource.data.ownerId == request.auth.uid || isAdmin());
+      allow create: if isValidId(ticketId)
+        && isVerifiedUser()
+        && isValidSupportTicket(incoming())
+        && incoming().status == 'open'
+        && incoming().createdAt == request.time;
+      allow update: if isValidId(ticketId)
+        && isAdmin()
+        && isValidSupportTicket(incoming())
+        && incoming().ownerId == existing().ownerId
+        && incoming().createdAt == existing().createdAt
+        && incoming().diff(existing()).affectedKeys().hasOnly(['status']);
+      allow delete: if isAdmin();
+    }
+  }
+}

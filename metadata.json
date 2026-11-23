@@ -1,0 +1,6 @@
+{
+  "name": "Luminous Hand",
+  "description": "Early childhood interactive ASL learning studio featuring A-Z and 1-10 tracing, kid-signing ASL videos, vibrant characters, and an AI Supervisor workflow with RAG knowledge files.",
+  "requestFramePermissions": ["camera", "microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
