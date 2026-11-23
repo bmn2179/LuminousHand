@@ -26,8 +26,24 @@ import {
   PipCharacter,
   SunnyCharacter,
 } from './Characters';
+import { auth } from '../firebase';
+import firebaseConfig from '../../firebase-applet-config.json';
 
-const API_BASE = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/+$/, '');
+const API_BASE = (
+  import.meta.env.VITE_API_BASE_URL ||
+  `https://us-central1-${firebaseConfig.projectId}.cloudfunctions.net/supervisorApi`
+).replace(/\/+$/, '');
+
+async function getApiHeaders(): Promise<HeadersInit> {
+  const user = auth.currentUser;
+  if (!user) {
+    throw new Error('Sign in to use the AI Supervisor.');
+  }
+  return {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${await user.getIdToken()}`,
+  };
+}
 
 interface SupervisorStudioViewProps {
   learnerName: string;
@@ -191,9 +207,9 @@ export const SupervisorStudioView: React.FC<SupervisorStudioViewProps> = ({
       let generatedRags: AgentRagFile[] | null = null;
 
       try {
-        const resp = await fetch(`${API_BASE}/api/supervisor/workflow`, {
+        const resp = await fetch(`${API_BASE}/workflow`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: await getApiHeaders(),
           body: JSON.stringify({
             learnerName,
             goal: goalInput,
@@ -265,7 +281,7 @@ export const SupervisorStudioView: React.FC<SupervisorStudioViewProps> = ({
       await onSaveGeneratedState(generatedWorkflow, generatedRags);
       setGenSuccess(
         usedStaticFallback
-          ? 'Generated updated subsequent workflow and refreshed all 5 RAG files (static GitHub Pages mode). Connect VITE_API_BASE_URL for live Gemini AI orchestration.'
+          ? 'Generated an offline workflow and refreshed all 5 RAG files. The Gemini service is unavailable; check the Firebase Functions deployment and sign-in.'
           : 'Generated new subsequent workflow via Gemini AI Supervisor and refreshed all 5 RAG files.'
       );
     } catch (err) {
@@ -281,9 +297,9 @@ export const SupervisorStudioView: React.FC<SupervisorStudioViewProps> = ({
     setIsQuerying(true);
     setRagAnswer('');
     try {
-      const resp = await fetch(`${API_BASE}/api/supervisor/rag-query`, {
+      const resp = await fetch(`${API_BASE}/rag-query`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await getApiHeaders(),
         body: JSON.stringify({
           question: ragQuestion,
           ragFiles,
